@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 import re
 import json
+import pymysql
 
 all_result = []
 
@@ -30,6 +31,7 @@ def main(link):
             result['editor'] = editor
             result['comment'] = get_comment_counts(link)
             all_result.append(result)
+            insert_data((title, str(time), article, editor, media_name, str(get_comment_counts(link))))
     return all_result
 
 
@@ -67,13 +69,27 @@ def get_comment_counts(link):
     total_counts = jd['result']['count']['total']
     return total_counts
 
+
+def insert_data(news_info):
+    print(news_info)
+    conn = pymysql.connect(host = 'localhost', user = 'root', password = '93560', db = 'db_int', port = 3306, charset="utf8")
+    cur = conn.cursor()
+    # query = "insert into sina_news(title, time, article, editor, media_name, comment) \
+    #          values('" + news_info[0] + "','" + news_info[1] + "','" + news_info[2] + "','" + news_info[3] + "','" + news_info[4] + "','" + news_info[5] + "')"
+    query = "insert into sina_news(title, time, article, editor, media_name, comment) \
+             values(%s,%s,%s,%s,%s,%s)"
+    print(query)
+    cur.execute(query, news_info)
+    cur.close()
+    conn.close()
+
 all_result = main('http://news.sina.com.cn/china/')
 num = 0
 for news in all_result:
     num += 1
-    for k, v in news.items():
-        print(k, v)
-    print('*' * 40)
+    # for k, v in news.items():
+    #     print(k, v)
+    # print('*' * 40)
 print(num)
 # get_context('http://news.sina.com.cn/c/nd/2016-12-11/doc-ifxypipu7688816.shtml')
 # get_context(link)
